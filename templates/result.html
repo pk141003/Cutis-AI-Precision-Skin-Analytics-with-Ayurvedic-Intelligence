@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Analysis Report | CutisAI Precision</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-soft: #eef2ff;
+            --danger: #ef4444;
+            --success: #16a34a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #f1f5f9;
+            --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); -webkit-print-color-adjust: exact; }
+
+        .nav {
+            position: fixed; top: 0; width: 100%; height: 72px;
+            background: rgba(255,255,255,0.75); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border); display: flex;
+            justify-content: space-between; align-items: center; padding: 0 5%; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; color: var(--primary); font-size: 1.2rem; }
+        .user-nav { position: relative; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 10px; }
+        .user-badge { background: var(--primary-soft); padding: 6px 12px; border-radius: 10px; font-weight: 700; color: var(--primary); }
+
+        .dropdown {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    width: 200px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    display: none;
+    padding: 8px;
+    z-index: 1000;
+}
+
+.dropdown.active {
+    display: block;
+}
+
+.dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    text-decoration: none;
+    color: #1e293b;
+    font-weight: 600;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.dropdown a:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+        .container { max-width: 1100px; margin: 110px auto 40px; padding: 0 20px; display: grid; gap: 25px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); position: relative; }
+.pill-success {
+    background: #ecfdf5;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.pill-warning {
+    background: #fffbeb;
+    color: #f59e0b;
+    border: 1px solid #fde68a;
+}
+
+.pill-danger {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+}
+
+        .section-tag { font-size: 0.7rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: block; }
+        .main-title { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.8px; color: #0f172a; }
+        .sub-header { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
+        .diagnosis-grid { display: grid; grid-template-columns: 340px 1fr; gap: 40px; }
+        .scan-img { width: 100%; border-radius: 14px; border: 4px solid var(--primary-soft); aspect-ratio: 1/1; object-fit: cover; }
+
+        .metric-pill { display: inline-flex; padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; margin-right: 10px; margin-top: 10px; border: 1px solid transparent; }
+        .pill-primary { background: var(--primary-soft); color: var(--primary); border-color: #c7d2fe; }
+        .pill-danger { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+
+        .data-table { width: 100%; margin-top: 25px; border-collapse: collapse; }
+        .data-table td { padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .label { font-weight: 600; color: var(--text-muted); font-size: 0.95rem; }
+        .value { font-weight: 700; text-align: right; color: #334155; }
+
+        .btn-export {
+            position: absolute; top: 28px; right: 28px;
+            background: #0f172a; color: white; border: none;
+            padding: 12px 20px; border-radius: 12px; font-weight: 700;
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.2s ease;
+        }
+        .btn-export:hover { transform: translateY(-2px); background: #000; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+        .explain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .param-card { padding: 16px; background: white; border-radius: 14px; border: 1px solid #e2e8f0; transition: border-color 0.2s; }
+        .param-card:hover { border-color: var(--primary); }
+        .param-card b { font-size: 0.85rem; display: block; margin-bottom: 4px; color: #475569; }
+        .param-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .param-desc { font-size: 0.75rem; color: #64748b; margin-top: 6px; line-height: 1.4; }
+
+        .ayur-section { background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-left: 8px solid var(--success); }
+        .herb-pill { padding: 10px 16px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 12px; font-weight: 700; color: #166534; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+
+        @media print {
+            .nav, .btn-export { display: none !important; }
+            .container { margin: 0; padding: 0; width: 100%; }
+            .card { box-shadow: none; border: 1px solid #eee; margin-bottom: 20px; page-break-inside: avoid; }
+            body { background: white; }
+        }
+
+        @media (max-width: 900px) {
+            .diagnosis-grid, .explain-grid { grid-template-columns: 1fr; }
+            .btn-export { position: static; width: 100%; margin-bottom: 20px; justify-content: center; }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="nav">
+
+    <a href="/dashboard" class="brand" style="text-decoration:none;">
+        <i data-lucide="activity"></i>
+        CutisAI
+    </a>
+
+    <div class="user-nav" onclick="toggleDropdown()" style="position:relative;">
+
+        <i data-lucide="user" style="width:18px;"></i>
+
+        <span style="
+            padding:6px 12px;
+            background:#eef2ff;
+            border-radius:10px;
+            font-weight:700;
+            color:#4f46e5;
+        ">
+            {{ user.fullname }}
+        </span>
+
+        <i data-lucide="chevron-down"></i>
+
+        <div class="dropdown" id="userDropdown">
+
+            <a href="/dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                Dashboard
+            </a>
+    
+            <a href="/detail">
+                <i data-lucide="bar-chart-3"></i>
+                New Scan
+            </a>
+
+            <hr style="border:none; border-top:1px solid #eee; margin:8px 0;">
+
+            <a href="/logout" style="color:#ef4444;">
+                <i data-lucide="log-out"></i>
+                Logout
+            </a>
+
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="card">
+        <button class="btn-export" onclick="window.print()">
+            <i data-lucide="file-down"></i> Export Clinical PDF
+        </button>
+
+        <div class="diagnosis-grid">
+            <div>
+                <span class="section-tag">Dermatological Image</span>
+                <img src="{{ url_for('static', filename='uploads/' + images[0]) }}" class="scan-img" alt="Clinical Scan">
+                <div style="margin-top: 15px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                    Scan ID: #{{ range(1000, 9999) | random }} | High-Resolution Analysis
+                </div>
+            </div>
+
+            <div>
+                <span class="section-tag">Primary AI Inference</span>
+                <h1 class="main-title">{{ prediction }}</h1>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+
+                <table class="data-table">
+                    <tr><td class="label">Patient Name</td><td class="value">{{ user.fullname }}</td></tr>
+                    <tr><td class="label">Age / Gender</td><td class="value">{{ age }} / {{ gender }}</td></tr>
+                    <tr><td class="label">Anatomical Site</td><td class="value">{{ area }}</td></tr>
+                    <tr><td class="label">Clinical Duration</td><td class="value">{{ duration }}</td></tr>
+                    <tr><td class="label">Patient Sensations</td><td class="value">{{ sensation }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<div class="card" style="margin-top: 25px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <span class="section-tag">AI Explainability</span>
+            <h3 class="sub-header">
+                <i data-lucide="brain" style="width:18px;"></i>
+                Neural Feature Extraction Report
+            </h3>
+        </div>
+
+        <button onclick="toggleAIBox()" 
+            style="padding:10px 16px; border:none; border-radius:10px;
+            background:var(--primary); color:white; font-weight:700;
+            cursor:pointer;">
+            <i data-lucide="eye"></i> View Details
+        </button>
+    </div>
+
+    <div id="aiBox" style="display:none; margin-top:20px;">
+
+        <p style="font-size:0.95rem; line-height:1.6; color:#475569; margin-bottom:20px;">
+            The AI model uses a <b>Convolutional Neural Network (CNN)</b> combined with classical
+            dermatological ABCD rule analysis to extract clinically relevant features from lesion imagery.
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:15px;">
+
+            <div class="param-card">
+                <b>Asymmetry</b>
+                <div class="param-val">{{ image_params.asymmetry }}</div>
+                <p class="param-desc">Bilateral structural imbalance detection</p>
+            </div>
+
+            <div class="param-card">
+                <b>Border Irregularity</b>
+                <div class="param-val">{{ image_params.border_irregularity }}</div>
+                <p class="param-desc">Edge distortion & contour variance</p>
+            </div>
+
+            <div class="param-card">
+                <b>Color Variance</b>
+                <div class="param-val">{{ image_params.color_variance }}</div>
+                <p class="param-desc">Pigment heterogeneity mapping (RGB clusters)</p>
+            </div>
+
+            <div class="param-card">
+                <b>Texture Entropy</b>
+                <div class="param-val">{{ image_params.texture_entropy }}</div>
+                <p class="param-desc">Surface roughness via LBP analysis</p>
+            </div>
+
+            <div class="param-card" style="border-left:4px solid var(--success);">
+                <b>Confidence</b>
+                <div class="param-val">{{ confidence }}%</div>
+                <p class="param-desc">Softmax probability output (CNN classifier)</p>
+            </div>
+
+        </div>
+
+        <div style="margin-top:25px; padding:18px; background:#f0f7ff; border-radius:12px; border:1px solid #dbeafe;">
+            <h4 style="font-size:0.85rem; font-weight:800; color:#1e40af; margin-bottom:10px;">
+                <i data-lucide="workflow"></i> Processing Pipeline
+            </h4>
+
+            <div style="display:flex; flex-wrap:wrap; gap:10px; font-size:0.75rem; font-weight:700; color:#2563eb;">
+                <span>Noise Filtering</span> ➜
+                <span>Segmentation</span> ➜
+                <span>Feature Extraction</span> ➜
+                <span>HAM10000 Matching</span> ➜
+                <span>Probability Output</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="card" style="margin-top:25px;">
+    <span class="section-tag">Diagnosis Probability</span>
+    <h3 class="sub-header"><i data-lucide="bar-chart-3"></i> Class Distribution</h3>
+
+    <div style="height:260px;">
+        <canvas id="chart"></canvas>
+    </div>
+</div>
+    {% if ayurveda %}
+
+<div class="card ayur-section" style="margin-top:25px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px;">
+        
+        <div>
+            <span class="section-tag" style="color:var(--success);">
+                Integrative Ayurvedic Support
+            </span>
+
+            <h2 style="font-size:1.8rem; font-weight:900; color:#064e3b;">
+                {{ ayurveda.disease }}
+            </h2>
+
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+                <span style="padding:6px 12px; background:#ecfdf5; border:1px solid #bbf7d0; border-radius:999px; font-weight:700; color:#166534;">
+                    {{ ayurveda.ayurvedic_name }}
+                </span>
+
+                <span style="padding:6px 12px; background:#f0fdf4; border-radius:999px; font-weight:700; color:#15803d;">
+                    Dosha: {{ ayurveda.targeted_dosha }}
+                </span>
+            </div>
+        </div>
+
+        <button onclick="toggleAyur()" 
+            style="padding:10px 16px; border:none; border-radius:10px;
+            background:#16a34a; color:white; font-weight:800; cursor:pointer;">
+            <i data-lucide="leaf"></i> View Protocol
+        </button>
+
+    </div>
+
+    {% if ayurveda.warning %}
+    <div style="margin-top:20px; padding:14px 16px; background:#fff1f2;
+        border-left:5px solid #ef4444; border-radius:12px; color:#991b1b;">
+        <b style="display:flex; gap:8px; align-items:center;">
+            <i data-lucide="alert-triangle"></i> Clinical Warning
+        </b>
+        {{ ayurveda.warning }}
+    </div>
+    {% endif %}
+
+    <div id="ayurBox" style="display:none; margin-top:25px;">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+            <div>
+                <div class="card" style="padding:18px; border-left:4px solid #22c55e;">
+                    <h4 style="margin-bottom:10px; color:#166534;">
+                        <i data-lucide="utensils"></i> Dietary Protocol
+                    </h4>
+                    <p style="font-size:0.9rem; color:#374151; line-height:1.6;">
+                        {{ ayurveda.dietary_protocol }}
+                    </p>
+                </div>
+
+                <div class="card" style="padding:18px; margin-top:15px;">
+                    <h4 style="margin-bottom:10px; color:#166534;">
+                        <i data-lucide="flask-conical"></i> Herbal Support
+                    </h4>
+
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        {% for herb in ayurveda.primary_herbs %}
+                        <span style="
+                            padding:8px 12px;
+                            background:#f0fdf4;
+                            border:1px solid #bbf7d0;
+                            border-radius:999px;
+                            font-weight:700;
+                            color:#166534;
+                            font-size:0.85rem;">
+                            {{ herb }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card" style="padding:18px; border-left:4px solid #3b82f6;">
+                    <h4 style="margin-bottom:10px; color:#1e40af;">
+                        <i data-lucide="stethoscope"></i> Clinical Care
+                    </h4>
+                    <p style="font-weight:700; color:#14532d; line-height:1.6;">
+                        {{ ayurveda.care_tip }}
+                    </p>
+                </div>
+                <div class="card" style="padding:18px; margin-top:15px;">
+                    <h4 style="margin-bottom:10px; color:#475569;">
+                        <i data-lucide="book-open"></i> Evidence Base
+                    </h4>
+                    <p style="font-size:0.85rem; color:#64748b; font-style:italic; line-height:1.6;">
+                        {{ ayurveda.research_basis }}
+                    </p>
+                </div>
+
+            </div>
+        </div>
+        <div style="margin-top:20px; padding:12px; background:#f8fafc;
+            border-radius:10px; font-size:0.75rem; color:#64748b;">
+            <b>Note:</b> Ayurvedic guidance is supportive only and does not replace dermatological treatment.
+        </div>
+    </div>
+</div>
+{% endif %}
+    <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 20px; padding-bottom: 40px;">
+        Generated by CutisAI Engine v4.2.0 | © 2026 Precision Health Systems<br>
+        Professional Interpretation Required. Not a standalone diagnostic substitute.
+    </div>
+
+</div>
+<div id="chatbotBtn" onclick="toggleChatbot()"
+     style="
+        position:fixed;
+        bottom:25px;
+        right:25px;
+        width:60px;
+        height:60px;
+        border-radius:50%;
+        background:linear-gradient(135deg,#6366f1,#4f46e5);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        box-shadow:0 10px 25px rgba(0,0,0,0.15);
+        z-index:9999;
+     ">
+    <i data-lucide="message-circle" style="color:white; width:26px; height:26px;"></i>
+</div>
+
+<div id="chatbotBox" style="
+    display:none;
+    position:fixed;
+    bottom:100px;
+    right:25px;
+    width:320px;
+    height:420px;
+    background:white;
+    border-radius:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.2);
+    z-index:9999;
+    overflow:hidden;
+    border:1px solid #e2e8f0;
+">
+
+    <div style="
+        background:#6366f1;
+        color:white;
+        padding:12px 14px;
+        font-weight:800;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    ">
+        <span>CutisAI Assistant</span>
+        <i data-lucide="x" style="cursor:pointer;" onclick="toggleChatbot()"></i>
+    </div>
+
+    <div id="chatBody" style="
+        height:310px;
+        padding:10px;
+        overflow-y:auto;
+        font-size:0.85rem;
+        color:#334155;
+    ">
+        <div style="background:#eef2ff; padding:8px; border-radius:10px; margin-bottom:8px;">
+            Hello I am your CutisAI assistant. Ask me about your skin report.
+        </div>
+    </div>
+
+    <div style="display:flex; border-top:1px solid #e2e8f0;">
+        <input id="chatInput" type="text" placeholder="Ask something..."
+            style="flex:1; padding:10px; border:none; outline:none;">
+        <button onclick="sendMessage()" style="
+            background:#6366f1;
+            color:white;
+            border:none;
+            padding:10px 14px;
+            cursor:pointer;
+            font-weight:700;
+        ">Send</button>
+    </div>
+
+</div></div>
+
+<script>
+    lucide.createIcons();
+
+    function toggleAyur() {
+        const box = document.getElementById("ayurBox");
+        box.style.display = (box.style.display === "none" || box.style.display === "") 
+            ? "block" 
+            : "none";
+    }
+
+    function toggleDropdown() {
+        document.getElementById("userDropdown").classList.toggle("active");
+    }
+
+    window.onclick = function(e) {
+        if (!e.target.closest('.user-nav')) {
+            document.getElementById("userDropdown").classList.remove("active");
+        }
+    }
+
+    function toggleAIBox() {
+        const box = document.getElementById("aiBox");
+        box.style.display = (box.style.display === "none") ? "block" : "none";
+    }
+
+    function toggleChatbot() {
+        const box = document.getElementById("chatbotBox");
+        box.style.display = (box.style.display === "block") ? "none" : "block";
+    }
+
+    function sendMessage() {
+        const input = document.getElementById("chatInput");
+        const chatBody = document.getElementById("chatBody");
+
+        const userText = input.value.trim();
+        if (!userText) return;
+
+        const userMsg = document.createElement("div");
+        userMsg.style = "text-align:right; margin:8px 0;";
+        userMsg.innerHTML = `
+            <span style="
+                background:#6366f1;
+                color:white;
+                padding:6px 10px;
+                border-radius:10px;
+                display:inline-block;">
+                ${userText}
+            </span>
+        `;
+        chatBody.appendChild(userMsg);
+
+        input.value = "";
+
+        const loadingMsg = document.createElement("div");
+        loadingMsg.style = "text-align:left; margin:8px 0;";
+        loadingMsg.innerHTML = `
+            <span style="
+                background:#f1f5f9;
+                color:#334155;
+                padding:6px 10px;
+                border-radius:10px;">
+                Thinking...
+            </span>
+        `;
+        chatBody.appendChild(loadingMsg);
+
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        fetch("/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: userText,
+                prediction: "{{ prediction }}"
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            loadingMsg.remove();
+
+            const botMsg = document.createElement("div");
+            botMsg.style = "text-align:left; margin:8px 0;";
+            botMsg.innerHTML = `
+                <span style="
+                    background:#f1f5f9;
+                    color:#334155;
+                    padding:6px 10px;
+                    border-radius:10px;
+                    display:inline-block;">
+                    ${data.reply}
+                </span>
+            `;
+            chatBody.appendChild(botMsg);
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+        })
+        .catch(() => {
+            loadingMsg.remove();
+
+            const errorMsg = document.createElement("div");
+            errorMsg.style = "text-align:left; margin:8px 0;";
+            errorMsg.innerHTML = `
+                <span style="
+                    background:#fef2f2;
+                    color:#991b1b;
+                    padding:6px 10px;
+                    border-radius:10px;">
+                    Error connecting to server.
+                </span>
+            `;
+            chatBody.appendChild(errorMsg);
+        });
+    }
+
+    const ctx = document.getElementById("chart").getContext("2d");
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: {{ all_predictions | map(attribute='class') | list | tojson | safe }},
+            datasets: [{
+                label: "Probability %",
+                data: {{ all_predictions | map(attribute='probability') | list | tojson | safe }},
+                backgroundColor: "#6366f1",
+                hoverBackgroundColor: "#4338ca",
+                borderRadius: 8,
+                barThickness: 24
+            }]
+        },
+        options: {
+            indexAxis: "y",
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: "#1e293b",
+                    padding: 12,
+                    titleFont: { size: 14, weight: "bold" },
+                    bodyFont: { size: 13 }
+                }
+            },
+            scales: {
+                x: {
+                    max: 100,
+                    grid: { color: "#f1f5f9" },
+                    ticks: { font: { weight: "600" }, color: "#64748b" }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { weight: "700" }, color: "#334155" }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

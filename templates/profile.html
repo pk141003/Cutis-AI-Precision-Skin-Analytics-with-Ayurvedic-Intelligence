@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings | CutisAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-soft: #eef2ff;
+            --danger: #ef4444;
+            --danger-soft: #fef2f2;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #f1f5f9;
+            --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body { background: var(--bg); color: var(--text-main); line-height: 1.6; }
+
+        .nav {
+            position: fixed; top: 0; width: 100%; height: 72px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 5%; z-index: 1000;
+        }
+
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--primary); font-size: 1.2rem; }
+
+        .user-nav { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 6px; border-radius: 50px; }
+        .user-nav img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--primary-soft); }
+
+        .dropdown {
+            position: absolute; top: 60px; right: 0; width: 200px;
+            background: white; border-radius: 12px; border: 1px solid var(--border);
+            box-shadow: var(--shadow); display: none; padding: 8px;
+        }
+        .dropdown.active { display: block; }
+        .dropdown a {
+            display: flex; align-items: center; gap: 10px; padding: 10px;
+            text-decoration: none; color: var(--text-main); font-size: 0.9rem; font-weight: 600; border-radius: 8px;
+        }
+        .dropdown a:hover { background: var(--primary-soft); color: var(--primary); }
+
+        .container { max-width: 1100px; margin: 110px auto 50px; padding: 0 20px; }
+        .settings-grid { display: grid; grid-template-columns: 280px 1fr; gap: 40px; }
+
+        @media (max-width: 850px) {
+            .settings-grid { grid-template-columns: 1fr; }
+        }
+
+        .nav-sidebar { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+            text-decoration: none; color: var(--text-muted); font-weight: 700;
+            border-radius: var(--radius); cursor: pointer; transition: 0.2s;
+        }
+        .nav-item i { width: 20px; }
+        .nav-item:hover { background: white; color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .nav-item.danger:hover { color: var(--danger); background: var(--danger-soft); }
+
+        .settings-card { background: white; border-radius: var(--radius); padding: 32px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .section { display: none; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+
+        h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+        .sub-text { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 30px; }
+
+        .form-group { margin-bottom: 24px; }
+        label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg); font-size: 1rem; font-weight: 500; transition: 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+
+        .checkbox-group {
+            display: flex; align-items: center; gap: 12px; padding: 16px;
+            background: var(--bg); border-radius: 12px; cursor: pointer;
+        }
+        .checkbox-group input { width: 18px; height: 18px; accent-color: var(--primary); }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 24px; border-radius: 12px; border: none;
+            font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.95rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { transform: translateY(-1px); opacity: 0.95; }
+        .btn-danger { background: var(--danger-soft); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .flash-msg {
+            background: var(--primary-soft); color: var(--primary);
+            padding: 16px; border-radius: 12px; margin-bottom: 24px;
+            font-weight: 700; display: flex; align-items: center; gap: 10px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<nav class="nav">
+    <div class="brand">
+        <i data-lucide="activity"></i>
+        CutisAI
+    </div>
+
+    <div class="user-nav" onclick="toggleDropdown()">
+    <i data-lucide="user" size="16"></i>
+        <span style="padding:6px 10px; background:#eef2ff; border-radius:8px; font-weight:700;">
+    {{ user.fullname }}
+</span>
+        <i data-lucide="chevron-down"></i>
+
+        <div class="dropdown" id="userDropdown">
+            <a href="/dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                Dashboard
+            </a>
+
+            <a href="/logout" style="color:#ef4444;">
+                <i data-lucide="log-out"></i>
+                Logout
+            </a>
+        </div>
+    </div>
+</nav>
+
+    <div class="container">
+        <div class="settings-grid">
+            
+            <aside class="nav-sidebar">
+                <div class="nav-item active" onclick="showSection('profile', this)">
+                    <i data-lucide="user"></i> Account Profile
+                </div>
+                <div class="nav-item" onclick="showSection('password', this)">
+                    <i data-lucide="key-round"></i> Security
+                </div>
+                <div class="nav-item" onclick="showSection('preferences', this)">
+                    <i data-lucide="settings-2"></i> Preferences
+                </div>
+                <div class="nav-item danger" onclick="showSection('danger', this)" style="margin-top: 20px;">
+                    <i data-lucide="user-minus"></i> Delete Account
+                </div>
+            </aside>
+
+            <main class="settings-card">
+                {% with messages = get_flashed_messages() %}
+                    {% for msg in messages %}
+                        <div class="flash-msg"><i data-lucide="info"></i> {{ msg }}</div>
+                    {% endfor %}
+                {% endwith %}
+
+                <div id="profile" class="section active">
+                    <h2>Profile Information</h2>
+                    <p class="sub-text">Update your clinical identity and contact details.</p>
+
+                    <form method="POST">
+                        <input type="hidden" name="form_type" value="profile">
+                        <div class="form-group">
+                            <label>Professional Name</label>
+                            <input type="text" name="fullname" value="{{ user.fullname }}" placeholder="Dr. Jane Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Clinical Email Address</label>
+                            <input type="email" name="email" value="{{ user.email }}" placeholder="jane@hospital.com">
+                        </div>
+                        <button class="btn btn-primary"><i data-lucide="check" size="18"></i> Save Profile</button>
+                    </form>
+                </div>
+
+                <div id="password" class="section">
+                    <h2>Change Password</h2>
+                    <p class="sub-text">Ensure your account is using a long, random password to stay secure.</p>
+
+                    <form method="POST">
+                        <input type="hidden" name="form_type" value="password">
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" name="password" placeholder="••••••••••••">
+                        </div>
+                        <button class="btn btn-primary"><i data-lucide="shield-check" size="18"></i> Update Security</button>
+                    </form>
+                </div>
+
+                <div id="preferences" class="section">
+                    <h2>Clinical Preferences</h2>
+                    <p class="sub-text">Manage how you interact with diagnostic notifications.</p>
+
+                    <form method="POST">
+                        <input type="hidden" name="form_type" value="preferences">
+                        <label class="checkbox-group">
+                            <input type="checkbox" name="email_alerts" {% if user.email_alerts %}checked{% endif %}>
+                            <div>
+                                <span style="font-weight: 700; display: block;">AI Analysis Alerts</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">Receive an email when new diagnostic reports are ready.</span>
+                            </div>
+                        </label>
+                        <button class="btn btn-primary" style="margin-top: 24px;">Save Preferences</button>
+                    </form>
+                </div>
+
+                <div id="danger" class="section">
+                    <h2 style="color: var(--danger)">Deactivate Account</h2>
+                    <p class="sub-text">Warning: This will permanently purge your clinical history and AI scan data.</p>
+
+                    <div style="background: var(--danger-soft); border-left: 4px solid var(--danger); padding: 16px; border-radius: 8px; margin-bottom: 24px; color: #991b1b; font-size: 0.9rem;">
+                        <strong>Irreversible Action:</strong> Once deleted, patient scan history cannot be recovered.
+                    </div>
+
+                    <form method="POST" action="/delete_account">
+                        <button class="btn btn-danger" onclick="return confirm('Are you absolutely sure? This cannot be undone.')">
+                            <i data-lucide="trash-2" size="18"></i> Permanently Delete Account
+                        </button>
+                    </form>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleDropdown() {
+            document.getElementById("userDropdown").classList.toggle("active");
+        }
+
+        function showSection(id, el) {
+            document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+            document.getElementById(id).classList.add("active");
+
+            document.querySelectorAll(".nav-item").forEach(a => a.classList.remove("active"));
+            el.classList.add("active");
+        }
+
+        window.onclick = function(e) {
+            if (!e.target.closest('.user-nav')) {
+                document.getElementById("userDropdown").classList.remove("active");
+            }
+        }
+    </script>
+
+</body>
+</html>
